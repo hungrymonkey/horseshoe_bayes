@@ -1,0 +1,4 @@
+numpy
+panda
+tensorflow
+tensorflow-probability
