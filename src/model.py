@@ -4,18 +4,28 @@ import tensorflow_probability as tfp
 from network_layer import GaussianLayer, HorseshoeLayer
 
 
-def calculate_log_likelihood(input, mean, sigma):
+def log_likelihood(input, mean, sigma):
     """
-    https://pdfs.semanticscholar.org/bd2a/fbef667369f52f2c57ec8e9f85470be85521.pdf
+    //https://pdfs.semanticscholar.org/bd2a/fbef667369f52f2c57ec8e9f85470be85521.pdf
     https://link.springer.com/article/10.1007/s10994-016-5619-z
+    https://www.cs.princeton.edu/courses/archive/fall18/cos324/files/mle-regression.pdf
+    https://www.statlect.com/glossary/log-likelihood
+
+    likelihood = PI^N_n=1 p(y_n|x_n,theta)
+    likelihood = PI^N_n=1 1/sqrt(2*pi*sigma^2) exp^(-(x-u)^2/(2*sigma^2))
+    log(likelihood) = SUM^N_n=1 log(sqrt(2*pi*sigma^2)) + log(exp^(-(x-u)^2/(2*sigma^2)))
+    log(likelihood) = -1/2 * log(2*pi*sigma^2) + -(x-u)^2/(2*sigma^2)
+
     log(f (xi; u, sig^2)) =
         -n/2 log(2*pi) - n/2 log(sig^2) - 1/(2sig)^2 sum(xi - u)^2
 
     log p(y_n|x_n, theta) =
         y_n log(f(x_n); theta) + (1-y_n)log(1 - f(x_n;theta))
     """
-    return (-3 * tf.math.log(sigma) - tf.Variable(1.5) * tf.math.log(2 * np.pi)
-            - (input - mean) ** 2 / (2 * sigma ** 2))
+    n_samples = tf.shape(mean)[0]
+    return (-n_samples * tf.math.log(sigma ** 2)
+            - n_samples * tf.math.log(2 * np.pi) * .5
+            - tf.reduce_sum((input - mean) ** 2) / (2 * sigma ** 2))
 
 
 class GaussianBayes(tf.keras.Model):
