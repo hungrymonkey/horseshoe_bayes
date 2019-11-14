@@ -4,12 +4,18 @@ import tensorflow_probability as tfp
 from network_layer import GaussianLayer, HorseshoeLayer
 
 
-def calculate_log_likelihood():
+def calculate_log_likelihood(input, mean, sigma):
     """
     https://pdfs.semanticscholar.org/bd2a/fbef667369f52f2c57ec8e9f85470be85521.pdf
     https://link.springer.com/article/10.1007/s10994-016-5619-z
+    log(f (xi; u, sig^2)) =
+        -n/2 log(2*pi) - n/2 log(sig^2) - 1/(2sig)^2 sum(xi - u)^2
+
+    log p(y_n|x_n, theta) =
+        y_n log(f(x_n); theta) + (1-y_n)log(1 - f(x_n;theta))
     """
-    return 2
+    return (-3 * tf.math.log(sigma) - tf.Variable(1.5) * tf.math.log(2 * np.pi)
+            - (input - mean) ** 2 / (2 * sigma ** 2))
 
 
 class GaussianBayes(tf.keras.Model):
@@ -28,10 +34,12 @@ class GaussianBayes(tf.keras.Model):
         return l2
 
     def elbo(self, phi):
-        """p(D|thetha) = PI_n_n=1 p(y_n|x_n,thetha)
-        L(phi) = E_phi (theta) [ log p(D|theta)] - KL [ q_phi(theta) || p(theta)]
-        = E_phi (theta) [ log p(D)] - KL [ q(theta|phi) || p(theta|D)]
         """
+        p(D|thetha) = PI_n_n=1 p(y_n|x_n,thetha)
+        L(phi) = E_phi (theta) [ log p(D|theta)] - KL [ q_phi(theta) || p(theta)]
+            = E_phi (theta) [ log p(D)] - KL [ q(theta|phi) || p(theta|D)]
+        """
+
         pass
 
 
@@ -55,8 +63,17 @@ class HorseshoeBayes(tf.keras.Model):
         l2 = GaussianLayer(l1)
         return l2
 
+    def elbo(self, phi):
+        """
+        L(phi)  = n/m sum^m_m=1 log p(y_m|x_m, theta) - KL[q_phi(theta) || p(theta)]
+
+        theta = q_phi(theta), {(x_m, y_m)}^M_m=1 ~ D^m
+        """
+        pass
+
     def prior(self, input):
-       
+        """
+        """
         w_tau = tfp.distributions.Normal(input)
         return w_tau
 
